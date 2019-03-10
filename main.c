@@ -28,7 +28,7 @@ int main() {
     fgets(input, 1024, stdin);
 
     message = message_init(strlen(input));
-    strcpy(message -> body, input);
+    strcpy((char *) message -> body, input);
 
     if(aes256_init(message)) {
         puts("Error: Couldn't initialize message with aes data!");
@@ -43,7 +43,7 @@ int main() {
 
     puts("User Message:");
     hex_print(message -> body, *message -> length);
-    puts(message -> body);
+    puts((char *) message -> body);
     puts("Sending message to be encrypted...");
     enc_msg = aes256_encrypt(message);
 
@@ -55,7 +55,7 @@ int main() {
 
     puts("Decrypted Message:");
     hex_print(dec_msg -> body, *dec_msg -> length);
-    puts(dec_msg -> body);
+    puts((char *) dec_msg -> body);
     //destroy messages
     aes_cleanup(message);
     aes_cleanup(enc_msg);
