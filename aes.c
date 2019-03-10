@@ -89,6 +89,10 @@ Message *aes256_decrypt(Message *encrypted_message) {
 }
 
 void aes_cleanup(Message *message) {
+    //free message struct
+    free(message -> aes_settings);
+    free(message -> length);
+    free(message -> body);
     free(message);
 }
 
