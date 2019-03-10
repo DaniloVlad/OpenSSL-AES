@@ -19,7 +19,8 @@ int enc_length = *(plaintext -> length) + (AES_BLOCK_SIZE - *(plaintext -> lengt
 
 ## Sample Output
 ```
-root@server:~$ gcc main.c -lcrypto aes.c -o main
+root@server:~$ make
+gcc main.c -g -Wall -lcrypto aes.c -o main
 root@server:~$ ./main
 Enter a message up to 1024 chars: 
 Hello World! My name is Danilo and I love you!
