@@ -1,11 +1,11 @@
-# the compiler: gcc for C program, define as g++ for C++
+# the compiler
   CC = gcc
 
-# compiler flags:
-CFLAGS  = -g -Wall
+# compiler flags
+CFLAGS  = -g -Wall -lcrypto
 
 main: main.c aes.c
-	$(CC) main.c $(CFLAGS) -lcrypto aes.c -o main
+	$(CC) main.c $(CFLAGS) aes.c -o main
 
 clean:
 	$(RM) main
