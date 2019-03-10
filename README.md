@@ -10,7 +10,7 @@ gcc main.c -lcrypto aes.c -o main
 ```
 
 ## Reason
-I saw loads of questions on stackoverflow on how to implement a simple aes256 example. So here it is! AES-256 is just a subset of the Rijndael block ciphers, that operates on 16 byte blocks (128-bit) and 32 byte keys.  Block ciphers operate on fixed size matrices called "blocks". For AES these blocks 4x4 with 16 bytes.  You must allocate enough space for this otherwise EVP_ENCRYPT will fail as its default is PKCS padding. Any message not a multiple of the block size (16 bytes) will be extended to fill the space.  ie: 12 chars becomes 16 chars, 22 chars becomes 32 chars.  
+I saw loads of questions on stackoverflow on how to implement a simple aes256 example. So here it is! AES-256 is just a subset of the Rijndael block ciphers.  Block ciphers operate on fixed sized matrices called "blocks". For AES these blocks 4x4 with 16 bytes.  You must allocate enough space for this otherwise EVP_ENCRYPT will fail as its default is PKCS padding. Any message not a multiple of the block size (16 bytes) will be extended to fill the space.  ie: 12 chars becomes 16 chars, 22 chars becomes 32 chars.  
 ```C
 int enc_length = *(plaintext -> length) + (AES_BLOCK_SIZE - *(plaintext -> length) % AES_BLOCK_SIZE);
 ```
