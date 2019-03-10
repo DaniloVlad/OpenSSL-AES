@@ -10,56 +10,90 @@ gcc main.c -lcrypto aes.c -o main
 ```
 
 ## Reason
-This is coming to github as part of my 30-day consecutive activity goal.  I saw loads of questions on
-stackoverflow on how to implement a simple aes256 example. So here it is!
+I saw loads of questions on stackoverflow on how to implement a simple aes256 example. So here it is!  The OpenSSL
+EVP_ENCRYPT functions use PKCS padding by default. Thus the size of any message not a multiple of the key size (16 bytes)
+will be extended to fill the space.  ie: 12 chars becomes 16 chars, 22 chars becomes 32 chars
+```C
+int enc_length = *(plaintext -> length) + (AES_BLOCK_SIZE - *(plaintext -> length) % AES_BLOCK_SIZE);
+```
 
 ## Sample Output
 ```
 root@server:~$ gcc main.c -lcrypto aes.c -o main
 root@server:~$ ./main
-Enter a message shorter than 16 chars: 
-Hello World!    
+Enter a message up to 1024 chars: 
+Hello World! My name is Danilo and I love you!
 Key:
 
-3A 45 17 FE 
-C8 28 F2 7C 
-83 22 10 51 
-9E 3D 75 F8 
-BD 0E 44 FF 
-1A 14 D4 99 
-54 F0 77 32 
-CF 36 72 3F 
+9A 24 EB 27 
+BB FE 4B 78 
+66 10 0A 26 
+9F 41 A8 F1 
+AC 00 F0 1C 
+40 4E BB 2C 
+B9 A7 18 4E 
+2B 18 E4 C7 
 
 IV:
 
-85 90 D7 55 
-C9 36 A7 3D 
-B6 8C 0A CA 
-4D B4 9E 54 
-B1 06 18 F4 
-D6 C8 A1 DB 
-51 F0 80 17 
-3C 8B 9C 4D 
+2F 2F 66 EC 
+F0 EE B0 FB 
+1E 80 77 06 
+94 FB A2 BB 
+35 82 A9 C0 
+E5 3F 59 19 
+B5 F5 EE ED 
+E4 A6 16 A8 
 
-Message:
-
-48 65 6C 6C 
-6F 20 57 6F 
-72 6C 64 21 
-0A 
-
-Encrypted Message
-
-AF 5C 1E 1D 
-BC AD 2E 2F 
-9D 08 B2 A6 
-52 0C D7 12 
-
-Decrypted Message
+User Message:
 
 48 65 6C 6C 
 6F 20 57 6F 
 72 6C 64 21 
-0A 
+20 4D 79 20 
+6E 61 6D 65 
+20 69 73 20 
+44 61 6E 69 
+6C 6F 20 61 
+6E 64 20 49 
+20 6C 6F 76 
+65 20 79 6F 
+75 21 0A 
+
+Hello World! My name is Danilo and I love you!
+
+Sending message to be encrypted...
+Encrypted Message:
+
+EF 6C 0F E6 
+13 1C E0 CC 
+E7 5B 46 FE 
+A5 20 F4 F9 
+C2 06 61 4C 
+A6 43 81 3F 
+CE 81 01 C1 
+8C 50 60 DC 
+E3 B2 89 CF 
+46 A7 C8 FE 
+03 4F DD E1 
+11 C2 1C 58 
+
+Sending message to be decrypted...
+Decrypted Message:
+
+48 65 6C 6C 
+6F 20 57 6F 
+72 6C 64 21 
+20 4D 79 20 
+6E 61 6D 65 
+20 69 73 20 
+44 61 6E 69 
+6C 6F 20 61 
+6E 64 20 49 
+20 6C 6F 76 
+65 20 79 6F 
+75 21 0A 
+
+Hello World! My name is Danilo and I love you!
 
 ```
