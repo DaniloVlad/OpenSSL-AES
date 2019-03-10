@@ -1,78 +1,94 @@
 #include "includes/aes.h"
 
-MSG *aes_init(char * input) {
-    
-    MSG *message = malloc(sizeof(MSG));
-    int in_len = strlen(input);
-
-    //chars are always exactly 1 byte
-    message -> raw_msg_len = in_len;
-    message -> enc_msg_len = in_len + AES_BLOCK_SIZE;
-    message -> raw_msg = malloc(in_len);
-    message -> enc_msg = malloc(in_len + AES_BLOCK_SIZE);
-    message -> key = malloc(AES_KEY_SIZE);
-    message -> iv = malloc(AES_KEY_SIZE);
-
-    //c will allocate the memory but the memory may still have data in it
-    memset(message -> enc_msg, 0, in_len + AES_BLOCK_SIZE);
-    memset(message -> key, 0, AES_KEY_SIZE);
-    memset(message -> iv, 0, AES_KEY_SIZE);
-    //copy over the message
-    strcpy(message -> raw_msg, input); 
-
-    if(!RAND_bytes(message -> key, AES_KEY_SIZE) || !RAND_bytes(message -> iv, AES_KEY_SIZE)) {
-        printf("Error: couldn't generate key or iv!");
-        return NULL;
-    }
-
-    return message;
+Message * message_init(int length) {
+    Message *ret = malloc(sizeof(Message));
+    ret -> body = malloc(length);
+    ret -> length = malloc(sizeof(int));
+    ret -> aes_settings = malloc(sizeof(AES_DATA));
+    ret -> aes_settings -> key = malloc(sizeof(AES_KEY_SIZE));
+    ret -> aes_settings -> iv = malloc(sizeof(AES_KEY_SIZE));
+    *ret -> length = length;
+    //used string terminator to allow string methods to work
+    memset(ret -> body, '\0', length);
+    memset(ret -> aes_settings -> key, 0, AES_KEY_SIZE);
+    memset(ret -> aes_settings -> iv, 0, AES_KEY_SIZE);
+    return ret;
 }
 
-//TO-DO: expand for text larger than 16 bytes
-int aes256_encrypt(MSG *msg) {
+int aes256_init(Message * input) {
+    if(!RAND_bytes(input -> aes_settings -> key, AES_KEY_SIZE) || !RAND_bytes(input -> aes_settings -> iv, AES_KEY_SIZE)) {
+        printf("Error: couldn't generate key or iv!");
+        return 1;
+    }
+    return 0;
+}
+
+Message *aes256_encrypt(Message * plaintext) {
     EVP_CIPHER_CTX *enc_ctx;
+    Message * encrypted_message;
+    int enc_length = *(plaintext -> length) + (AES_BLOCK_SIZE - *(plaintext -> length) % AES_BLOCK_SIZE);
+
+    encrypted_message = message_init(enc_length);
+    //set up encryption context
     enc_ctx = EVP_CIPHER_CTX_new();
-    
-    EVP_EncryptInit(enc_ctx, EVP_aes_256_cbc(), msg -> key, msg -> iv);
-    if(!EVP_EncryptUpdate(enc_ctx, msg -> enc_msg, &msg -> enc_msg_len, msg -> raw_msg, msg -> raw_msg_len)) {
+    EVP_EncryptInit(enc_ctx, EVP_aes_256_cbc(), plaintext -> aes_settings -> key, plaintext -> aes_settings -> iv);
+    //encrypt all the bytes up to but not including the last block
+    if(!EVP_EncryptUpdate(enc_ctx, encrypted_message -> body, &enc_length, plaintext -> body, *plaintext -> length)) {
         EVP_CIPHER_CTX_cleanup(enc_ctx);
         printf("EVP Error: couldn't update encryption with plain text!\n");
-        return 1;
+        return NULL;
     }
-    if(!EVP_EncryptFinal_ex(enc_ctx, msg -> enc_msg, &(msg -> enc_msg_len))) {
+    //update length with the amount of bytes written
+    *(encrypted_message -> length) = enc_length;
+    //EncryptFinal will cipher the last block + Padding
+    if(!EVP_EncryptFinal_ex(enc_ctx, enc_length + encrypted_message -> body, &enc_length)) {
         EVP_CIPHER_CTX_cleanup(enc_ctx);
         printf("EVP Error: couldn't finalize encryption!\n");
-        return 1;
+        return NULL;
     }
-    return 0;
+    //add padding to length
+    *(encrypted_message -> length) += enc_length;
+    //no errors, copy over key & iv rather than pointing to the plaintext msg
+    memcpy(encrypted_message -> aes_settings -> key, plaintext -> aes_settings -> key, AES_KEY_SIZE);
+    memcpy(encrypted_message -> aes_settings -> iv, plaintext -> aes_settings -> iv, AES_KEY_SIZE);
+    //Free context and return encrypted message
+    EVP_CIPHER_CTX_cleanup(enc_ctx);
+    return encrypted_message;
 }
 
-int aes256_decrypt(MSG *msg) {
+Message *aes256_decrypt(Message *encrypted_message) {
     EVP_CIPHER_CTX *dec_ctx;
-
+    int dec_length = 0;
+    Message * decrypted_message;
+    //initialize return message and cipher context
+    decrypted_message = message_init(*encrypted_message -> length);
     dec_ctx = EVP_CIPHER_CTX_new();
-    
-    EVP_DecryptInit(dec_ctx, EVP_aes_256_cbc(), msg -> key, msg -> iv);
-    if(!EVP_DecryptUpdate(dec_ctx, msg -> raw_msg, &(msg -> raw_msg_len), msg -> enc_msg, msg -> enc_msg_len)) {
+    EVP_DecryptInit(dec_ctx, EVP_aes_256_cbc(), encrypted_message -> aes_settings -> key, encrypted_message -> aes_settings -> iv);
+    //same as above
+    if(!EVP_DecryptUpdate(dec_ctx, decrypted_message -> body, &dec_length, encrypted_message -> body, *encrypted_message -> length)) {
         EVP_CIPHER_CTX_cleanup(dec_ctx);
         printf("EVP Error: couldn't update decrypt with text!\n");
-        return 1;
-    }
-
-    if(!EVP_DecryptFinal_ex(dec_ctx, msg -> raw_msg, &(msg -> raw_msg_len))) {
+        return NULL;
+    }  
+    *(decrypted_message -> length) = dec_length;
+    if(!EVP_DecryptFinal_ex(dec_ctx, *decrypted_message->length + decrypted_message -> body, &dec_length)) {
         EVP_CIPHER_CTX_cleanup(dec_ctx);
         printf("EVP Error: couldn't finalize decryption!\n");
-        return 1;
+        return NULL;
     }
-    return 0;
+    //auto handle padding
+    *(decrypted_message -> length) += dec_length;
+    //Terminate string for easier use.
+    *(decrypted_message -> body + *decrypted_message -> length) = '\0';
+    //no errors, copy over key & iv rather than pointing to the encrypted msg
+    memcpy(decrypted_message -> aes_settings -> key, encrypted_message -> aes_settings -> key, AES_KEY_SIZE);
+    memcpy(decrypted_message -> aes_settings -> iv, encrypted_message -> aes_settings -> iv, AES_KEY_SIZE);
+    //free context and return decrypted message
+    EVP_CIPHER_CTX_cleanup(dec_ctx);
+    return decrypted_message;
 }
 
-void aes_cleanup(MSG *message) {
-    free(message -> enc_msg);
-    free(message -> raw_msg);
-    free(message -> key);
-    free(message -> iv);
+void aes_cleanup(Message *message) {
     free(message);
-
 }
 
