@@ -1,5 +1,5 @@
 # the compiler
-  CC = gcc
+CC = gcc
 
 # compiler flags
 CFLAGS  = -g -Wall -lcrypto
