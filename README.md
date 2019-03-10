@@ -6,7 +6,8 @@ For more information visit the [OpenSSL docs](https://www.openssl.org/docs/manma
 ## Usage
 Compile the code with:
 ```
-gcc main.c -lcrypto aes.c -o main
+root@server:~$ make
+gcc main.c -g -Wall -lcrypto aes.c -o main
 ```
 
 ## Reason
