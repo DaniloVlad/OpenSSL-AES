@@ -11,21 +11,27 @@
 #define AES_BLOCK_SIZE 16
 #define AES_KEY_SIZE 32
 
-typedef struct msg_struct
+typedef struct _AES_DATA 
 {
-    char *raw_msg;
-    int raw_msg_len;
-    unsigned char *enc_msg;
-    int enc_msg_len;
     unsigned char *key;
     unsigned char *iv;
-} MSG;
+} AES_DATA;
 
-MSG * aes_init(char *);
+typedef struct Message_Struct
+{
+    unsigned char *body;
+    int *length;
+    AES_DATA *aes_settings;
+    
+} Message;
 
-int aes256_encrypt(MSG *);
+Message *message_init(int);
 
-int aes256_decrypt(MSG *);
+int aes256_init(Message *);
+
+Message *aes256_encrypt(Message *);
+
+Message *aes256_decrypt(Message *);
 
 void aes_cleanup();
 
