@@ -16,51 +16,50 @@ int main() {
     OpenSSL_add_all_algorithms();
     OPENSSL_config(NULL);
 
-    //create message pointer
-    MSG *message = NULL;
+    
     //input buffer, the AES alg (Rijndael) works on blocks of 16 bytes in a 4x4
     //If a string is 12 chars (bytes) it gets padded to 16.
-    char input[16] = {0};
-   
+    char input[1024] = {0};
+   //create & init message pointer 
+    Message *message, *enc_msg, *dec_msg;
 
     //get message to be encrypted
-    printf("Enter a message shorter than 16 chars: \n");
-    fgets(input, 16, stdin);
+    printf("Enter a message up to 1024 chars: \n");
+    fgets(input, 1024, stdin);
 
-    //initialize aes message (generates the key & iv)
-    message = aes_init(input);
-    if(!message) {
-        printf("Error: couldn't initialize message.");
+    message = message_init(strlen(input));
+    strcpy(message -> body, input);
+
+    if(aes256_init(message)) {
+        puts("Error: Couldn't initialize message with aes data!");
         return 1;
     }
-    
-    printf("Key:\n");
-    hex_print(message -> key, AES_KEY_SIZE);
-    printf("IV:\n");
-    hex_print(message -> iv, AES_KEY_SIZE);
-    printf("Message:\n");
-    hex_print(message -> raw_msg, message -> raw_msg_len);
 
-    //send message to be encrypted
-    if(aes256_encrypt(message) != 0) {
-        printf("Error encrypting message!");
-    }
+    puts("Key:");
+    hex_print(message -> aes_settings -> key, AES_KEY_SIZE);
 
-    printf("Encrypted Message\n");
-    hex_print(message -> enc_msg, message -> enc_msg_len);
-    //zero the raw msg
-    memset(message -> raw_msg, 0 , message -> raw_msg_len);
+    puts("IV:");
+    hex_print(message -> aes_settings -> iv, AES_KEY_SIZE);
 
-    //send encrypted message to be decrypted
-    if(aes256_decrypt(message) != 0) {
-        printf("Error decrypting message!");
-    }
+    puts("User Message:");
+    hex_print(message -> body, *message -> length);
+    puts(message -> body);
+    puts("Sending message to be encrypted...");
+    enc_msg = aes256_encrypt(message);
 
-    printf("Decrypted Message\n");
-    hex_print(message -> raw_msg, message -> raw_msg_len);
+    puts("Encrypted Message:");
+    hex_print(enc_msg -> body, *enc_msg -> length);
 
-    //destroy message struct
+    puts("Sending message to be decrypted...");
+    dec_msg = aes256_decrypt(enc_msg);
+
+    puts("Decrypted Message:");
+    hex_print(dec_msg -> body, *dec_msg -> length);
+    puts(dec_msg -> body);
+    //destroy messages
     aes_cleanup(message);
+    aes_cleanup(enc_msg);
+    aes_cleanup(dec_msg);
     //clean up ssl;
     EVP_cleanup(); 
     CRYPTO_cleanup_all_ex_data(); //Stop data leaks
