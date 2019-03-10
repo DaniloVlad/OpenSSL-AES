@@ -1,6 +1,6 @@
 # OpenSSL-AES
 
-An example of using OpenSSL EVP Interface for American Encryption Standard (AES) in cipher block chaining mode (CBC) with 256 bit keys.
+An example of using OpenSSL EVP Interface for Advanced Encryption Standard (AES) in cipher block chaining mode (CBC) with 256 bit keys.
 For more information visit the [OpenSSL docs](https://www.openssl.org/docs/manmaster/)
 
 ## Usage
