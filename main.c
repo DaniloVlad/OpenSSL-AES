@@ -29,6 +29,10 @@ int main() {
 
     //initialize aes message (generates the key & iv)
     message = aes_init(input);
+    if(!message) {
+        printf("Error: couldn't initialize message.");
+        return 1;
+    }
     
     printf("Key:\n");
     hex_print(message -> key, AES_KEY_SIZE);

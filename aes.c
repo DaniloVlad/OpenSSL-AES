@@ -1,8 +1,10 @@
 #include "includes/aes.h"
 
 MSG *aes_init(char * input) {
+    
     MSG *message = malloc(sizeof(MSG));
     int in_len = strlen(input);
+
     //chars are always exactly 1 byte
     message -> raw_msg_len = in_len;
     message -> enc_msg_len = in_len + AES_BLOCK_SIZE;
@@ -13,17 +15,14 @@ MSG *aes_init(char * input) {
 
     //c will allocate the memory but the memory may still have data in it
     memset(message -> enc_msg, 0, in_len + AES_BLOCK_SIZE);
+    memset(message -> key, 0, AES_KEY_SIZE);
+    memset(message -> iv, 0, AES_KEY_SIZE);
     //copy over the message
     strcpy(message -> raw_msg, input); 
 
-    if(RAND_bytes(message -> key, AES_KEY_SIZE) != 1) {
-        printf("Error: couldn't generate key.");
-        exit(1);
-    }
-
-    if(RAND_bytes(message -> iv, AES_KEY_SIZE) != 1) {
-        printf("Error: couldn't generate iv.");
-        exit(1);
+    if(!RAND_bytes(message -> key, AES_KEY_SIZE) || !RAND_bytes(message -> iv, AES_KEY_SIZE)) {
+        printf("Error: couldn't generate key or iv!");
+        return NULL;
     }
 
     return message;
