@@ -2,20 +2,26 @@
 
 Message * message_init(int length) {
     Message *ret = malloc(sizeof(Message));
+    
     ret -> body = malloc(length);
     ret -> length = malloc(sizeof(int));
-    ret -> aes_settings = malloc(sizeof(AES_DATA));
-    ret -> aes_settings -> key = malloc(sizeof(AES_KEY_SIZE));
-    ret -> aes_settings -> iv = malloc(sizeof(AES_KEY_SIZE));
     *ret -> length = length;
     //used string terminator to allow string methods to work
     memset(ret -> body, '\0', length);
-    memset(ret -> aes_settings -> key, 0, AES_KEY_SIZE);
-    memset(ret -> aes_settings -> iv, 0, AES_KEY_SIZE);
+    aes256_init(ret);
     return ret;
 }
 
 int aes256_init(Message * input) {
+    AES_DATA *aes_info = malloc(sizeof(AES_DATA));
+    aes_info -> key = malloc(sizeof(char) * AES_KEY_SIZE);
+    aes_info -> iv = malloc(sizeof(char) * AES_KEY_SIZE);
+    //point to new data
+    input -> aes_settings = aes_info;
+    //set to zero
+    memset(input -> aes_settings -> key, 0, AES_KEY_SIZE);
+    memset(input -> aes_settings -> iv, 0, AES_KEY_SIZE);
+    //get rand bytes
     if(!RAND_bytes(input -> aes_settings -> key, AES_KEY_SIZE) || !RAND_bytes(input -> aes_settings -> iv, AES_KEY_SIZE)) {
         printf("Error: couldn't generate key or iv!");
         return 1;
@@ -88,9 +94,15 @@ Message *aes256_decrypt(Message *encrypted_message) {
     return decrypted_message;
 }
 
-void aes_cleanup(Message *message) {
+void aes_cleanup(AES_DATA *aes_data) {
+    free(aes_data -> iv);
+    free(aes_data -> key);
+    free(aes_data);
+}
+
+void message_cleanup(Message *message) {
     //free message struct
-    free(message -> aes_settings);
+    aes_cleanup(message -> aes_settings);
     free(message -> length);
     free(message -> body);
     free(message);
