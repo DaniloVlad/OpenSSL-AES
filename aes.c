@@ -2,12 +2,12 @@
 
 Message * message_init(int length) {
     Message *ret = malloc(sizeof(Message));
-    
     ret -> body = malloc(length);
     ret -> length = malloc(sizeof(int));
     *ret -> length = length;
     //used string terminator to allow string methods to work
     memset(ret -> body, '\0', length);
+    //initialize aes_data
     aes256_init(ret);
     return ret;
 }
