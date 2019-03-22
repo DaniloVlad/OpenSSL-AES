@@ -33,6 +33,9 @@ Message *aes256_encrypt(Message *);
 
 Message *aes256_decrypt(Message *);
 
-void aes_cleanup();
+void aes_cleanup(AES_DATA *);
+void message_cleanup(Message *);
+
+
 
 #endif
