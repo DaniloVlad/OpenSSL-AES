@@ -57,9 +57,9 @@ int main() {
     hex_print(dec_msg -> body, *dec_msg -> length);
     puts((char *) dec_msg -> body);
     //destroy messages
-    aes_cleanup(message);
-    aes_cleanup(enc_msg);
-    aes_cleanup(dec_msg);
+    message_cleanup(message);
+    message_cleanup(enc_msg);
+    message_cleanup(dec_msg);
     //clean up ssl;
     EVP_cleanup(); 
     CRYPTO_cleanup_all_ex_data(); //Stop data leaks
